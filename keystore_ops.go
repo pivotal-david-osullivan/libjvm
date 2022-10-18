@@ -25,8 +25,10 @@ type PKCS12Keystore struct {
 	Logger            io.Writer
 	SystemCerts       map[string][]*pem.Block
 	TrustStoreEntries []pkcs.TrustStoreEntry
+	Truststore	      pkcs.TrustStore
 	JVMCerts          []*x509.Certificate
 	KeyStorePath      string
+	Config			  pkcs.Config
 }
 
 func CombineCerts(path string, systemCerts map[string][]*pem.Block, logger io.Writer) error {
@@ -40,7 +42,10 @@ func CombineCerts(path string, systemCerts map[string][]*pem.Block, logger io.Wr
 		Logger:       logger,
 		SystemCerts:  systemCerts,
 		KeyStorePath: path,
+		Config: 	  *pkcs.DefaultConfig,
 	}
+	pkcs.Config.HasPassword = false
+	pkcs.Config.Password = ""
 	var err error
 	if err = jks.CanRead(); err == nil {
 		if err = jks.ReadLoadWrite(); err != nil {
@@ -61,10 +66,13 @@ func (p *PKCS12Keystore) ReadKeystore() error {
 	if data, err := ioutil.ReadFile(p.KeyStorePath); err != nil {
 		return fmt.Errorf("unable to open %s\n%w", p.KeyStorePath, err)
 	} else {
-		if certs, err := pkcs.DecodeTrustStore(data, ""); err != nil {
+		p.Config.HasPassword = false
+		if err :=  pkcs.UnmarshalTrustStore(data,&p.Truststore,&p.Config);/*pkcs.DecodeTrustStore(data, "");*/ err != nil {
 			return fmt.Errorf("unable to decode password-less PKCS12 keystore\n %w", err)
 		} else {
-			p.JVMCerts = append(p.JVMCerts, certs...)
+			for _, te := range p.Truststore.Entries{
+				p.JVMCerts = append(p.JVMCerts, te.Cert)
+			}
 		}
 	}
 	return nil

@@ -17,6 +17,9 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.2.0
 )
 
+replace software.sslmate.com/src/go-pkcs12 => /Users/davidos/workspace/go-pkcs12
+replace github.com/paketo-buildpacks/libpak => /Users/davidos/workspace/libraries/libpak
+
 require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/creack/pty v1.1.18 // indirect
